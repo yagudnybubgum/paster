@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Build artifacts
+swift/build/
+swift/.build/
+
+# IDE / tooling
+.vscode/
+.idea/
+*.xcuserstate
+
+# Misc
+.claude/
