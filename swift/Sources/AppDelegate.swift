@@ -35,7 +35,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         monitor.start()
 
-        hotkey = HotKey(keyCode: UInt32(kVK_ANSI_V), modifiers: [.command, .shift]) { [weak self] in
+        registerHotkey()
+
+        NotificationCenter.default.addObserver(
+            forName: .hotkeyDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.registerHotkey()
+        }
+    }
+
+    private func registerHotkey() {
+        // Unregister previous hotkey
+        hotkey = nil
+
+        let defaults = UserDefaults.standard
+        let savedKeyCode = defaults.object(forKey: "hotkey.keyCode") as? Int
+        let savedModifiers = defaults.object(forKey: "hotkey.modifiers") as? Int
+
+        let keyCode = UInt32(savedKeyCode ?? kVK_ANSI_V)
+        let modifiers: NSEvent.ModifierFlags
+        if let raw = savedModifiers {
+            modifiers = NSEvent.ModifierFlags(rawValue: UInt(raw))
+        } else {
+            modifiers = [.command, .shift]
+        }
+
+        hotkey = HotKey(keyCode: keyCode, modifiers: modifiers) { [weak self] in
             self?.statusBar.togglePopover()
         }
     }

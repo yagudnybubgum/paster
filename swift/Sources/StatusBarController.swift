@@ -12,7 +12,7 @@ final class StatusBarController {
     private var outsideMonitor: Any?
     private var keyMonitor: Any?
 
-    private let panelSize = NSSize(width: 360, height: 480)
+    private let panelSize = NSSize(width: 390, height: 480)
 
     init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

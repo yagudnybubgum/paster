@@ -38,6 +38,13 @@ struct PopoverView: View {
     @AppStorage("hotkey_hint_dismissed") private var hintDismissCount: Int = 0
     @State private var dismissedThisSession: Set<Int> = []
 
+    @AppStorage("hotkey.keyCode") private var hotkeyKeyCode: Int = 9 // V
+    @AppStorage("hotkey.modifiers") private var hotkeyModifiers: Int = Int(
+        NSEvent.ModifierFlags([.command, .shift]).rawValue
+    )
+    @AppStorage("hotkey.character") private var hotkeyCharacter: String = "V"
+    @State private var recordingHotkey: Bool = false
+
     let onDismiss: () -> Void
 
     private var items: [ListItem] {
@@ -61,10 +68,11 @@ struct PopoverView: View {
             Divider().opacity(0.6)
             footer
         }
-        .frame(width: 360, height: 480)
+        .frame(width: 390, height: 480)
         .background(VisualEffect())
         .onAppear {
             dismissedThisSession.removeAll()
+            recordingHotkey = false
             reload()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 searchFocused = true
@@ -149,7 +157,37 @@ struct PopoverView: View {
         }
     }
 
+    @ViewBuilder
     private var footer: some View {
+        Group {
+            if recordingHotkey {
+                recordingFooter
+            } else {
+                normalFooter
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 16)
+        .onChange(of: recordingHotkey) { _ in
+            if recordingHotkey {
+                HotkeyRecorder.shared.start(
+                    onCapture: { kc, mods, char in
+                        hotkeyKeyCode = kc
+                        hotkeyModifiers = Int(mods.rawValue)
+                        hotkeyCharacter = char
+                        recordingHotkey = false
+                        NotificationCenter.default.post(name: .hotkeyDidChange, object: nil)
+                    },
+                    onCancel: { recordingHotkey = false }
+                )
+            } else {
+                HotkeyRecorder.shared.stop()
+            }
+        }
+    }
+
+    private var normalFooter: some View {
         HStack(spacing: 12) {
             Toggle(isOn: Binding(
                 get: { loginAtStart },
@@ -169,6 +207,8 @@ struct PopoverView: View {
 
             Spacer()
 
+            hotkeyBadge
+
             Button("Clear") {
                 Storage.shared.clear()
                 reload()
@@ -182,9 +222,50 @@ struct PopoverView: View {
             .buttonStyle(.borderless)
             .font(.system(size: 12))
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .padding(.bottom, 16)
+    }
+
+    private var hotkeyBadge: some View {
+        Button {
+            recordingHotkey = true
+        } label: {
+            HStack(spacing: 4) {
+                Text(hotkeyDisplay)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Image(systemName: "pencil")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Change shortcut")
+    }
+
+    private var recordingFooter: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "command")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
+            Text("Press shortcut…")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text("Esc to cancel")
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private var hotkeyDisplay: String {
+        let mods = NSEvent.ModifierFlags(rawValue: UInt(hotkeyModifiers))
+        var out = ""
+        if mods.contains(.control) { out += "⌃" }
+        if mods.contains(.option)  { out += "⌥" }
+        if mods.contains(.shift)   { out += "⇧" }
+        if mods.contains(.command) { out += "⌘" }
+        out += hotkeyCharacter.uppercased()
+        return out
     }
 
     private func reload() {
