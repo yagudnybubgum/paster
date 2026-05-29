@@ -7,6 +7,6 @@
 "Quit" = "Выйти";
 "Image" = "Картинка";
 "PDF" = "PDF";
-"Press ⌘⇧V from anywhere to open" = "Нажми ⌘⇧V для вызова";
-"Press ⌘⇧V from anywhere" = "Нажми ⌘⇧V";
+"Press %@ from anywhere to open" = "Нажми %@ для вызова";
+"Press %@ from anywhere" = "Нажми %@";
 "Open Paster instantly" = "Откроет Paster мгновенно";

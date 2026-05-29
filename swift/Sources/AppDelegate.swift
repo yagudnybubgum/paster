@@ -44,11 +44,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             self?.registerHotkey()
         }
+
+        // While the user is recording a new shortcut, suspend the global
+        // hotkey so pressing the current combination doesn't trigger the
+        // popover instead of being captured.
+        NotificationCenter.default.addObserver(
+            forName: .hotkeyRecordingStarted,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.suspendHotkey()
+        }
+    }
+
+    private func suspendHotkey() {
+        hotkey?.invalidate()
+        hotkey = nil
     }
 
     private func registerHotkey() {
-        // Unregister previous hotkey
-        hotkey = nil
+        suspendHotkey()
 
         let defaults = UserDefaults.standard
         let savedKeyCode = defaults.object(forKey: "hotkey.keyCode") as? Int

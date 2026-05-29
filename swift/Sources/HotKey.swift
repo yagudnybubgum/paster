@@ -32,8 +32,16 @@ final class HotKey {
     }
 
     deinit {
+        invalidate()
+    }
+
+    /// Explicit teardown: unregisters the Carbon hotkey and drops the static
+    /// strong reference. Required because `HotKey.instances` holds self, so
+    /// `deinit` alone never fires on its own.
+    func invalidate() {
         if let ref = hotKeyRef {
             UnregisterEventHotKey(ref)
+            hotKeyRef = nil
         }
         HotKey.instances.removeValue(forKey: id)
     }

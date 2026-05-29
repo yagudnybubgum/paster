@@ -3,6 +3,7 @@ import Carbon.HIToolbox
 
 extension Notification.Name {
     static let hotkeyDidChange = Notification.Name("PasterHotkeyDidChange")
+    static let hotkeyRecordingStarted = Notification.Name("PasterHotkeyRecordingStarted")
 }
 
 /// Captures a single user-entered key combination via a local event monitor.

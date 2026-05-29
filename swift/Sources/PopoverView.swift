@@ -128,7 +128,7 @@ struct PopoverView: View {
                     Text("Copy text or an image to get started")
                         .foregroundStyle(.tertiary)
                         .font(.system(size: 11))
-                    Text("Press ⌘⇧V from anywhere to open")
+                    Text("Press \(hotkeyDisplay) from anywhere to open")
                         .foregroundStyle(.tertiary)
                         .font(.system(size: 11))
                         .padding(.top, 2)
@@ -171,6 +171,8 @@ struct PopoverView: View {
         .padding(.bottom, 16)
         .onChange(of: recordingHotkey) { _ in
             if recordingHotkey {
+                // Suspend the live hotkey so it doesn't fire during capture
+                NotificationCenter.default.post(name: .hotkeyRecordingStarted, object: nil)
                 HotkeyRecorder.shared.start(
                     onCapture: { kc, mods, char in
                         hotkeyKeyCode = kc
@@ -179,7 +181,11 @@ struct PopoverView: View {
                         recordingHotkey = false
                         NotificationCenter.default.post(name: .hotkeyDidChange, object: nil)
                     },
-                    onCancel: { recordingHotkey = false }
+                    onCancel: {
+                        recordingHotkey = false
+                        // Re-register the existing hotkey
+                        NotificationCenter.default.post(name: .hotkeyDidChange, object: nil)
+                    }
                 )
             } else {
                 HotkeyRecorder.shared.stop()
@@ -448,6 +454,21 @@ struct ClipRow: View {
 struct HotkeyHintRow: View {
     let onDismiss: () -> Void
     @State private var hovering = false
+    @AppStorage("hotkey.modifiers") private var hotkeyModifiers: Int = Int(
+        NSEvent.ModifierFlags([.command, .shift]).rawValue
+    )
+    @AppStorage("hotkey.character") private var hotkeyCharacter: String = "V"
+
+    private var hotkeyDisplay: String {
+        let mods = NSEvent.ModifierFlags(rawValue: UInt(hotkeyModifiers))
+        var out = ""
+        if mods.contains(.control) { out += "⌃" }
+        if mods.contains(.option)  { out += "⌥" }
+        if mods.contains(.shift)   { out += "⇧" }
+        if mods.contains(.command) { out += "⌘" }
+        out += hotkeyCharacter.uppercased()
+        return out
+    }
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
@@ -461,7 +482,7 @@ struct HotkeyHintRow: View {
                 )
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("Press ⌘⇧V from anywhere")
+                Text("Press \(hotkeyDisplay) from anywhere")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.primary)
                 Text("Open Paster instantly")

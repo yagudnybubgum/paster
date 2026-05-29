@@ -7,6 +7,6 @@
 "Quit" = "Quit";
 "Image" = "Image";
 "PDF" = "PDF";
-"Press ⌘⇧V from anywhere to open" = "Press ⌘⇧V from anywhere to open";
-"Press ⌘⇧V from anywhere" = "Press ⌘⇧V from anywhere";
+"Press %@ from anywhere to open" = "Press %@ from anywhere to open";
+"Press %@ from anywhere" = "Press %@ from anywhere";
 "Open Paster instantly" = "Open Paster instantly";
